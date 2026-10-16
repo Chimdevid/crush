@@ -1,0 +1,296 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Will You Go on a Date With Me? 💗</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #ffe0ec, #fff5f8, #f6d5ff);
+  color: #5d3047;
+}
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 22px;
+  background: white;
+  border-radius: 25px;
+  text-align: center;
+  box-shadow: 0 12px 35px #a64d7025;
+}
+
+.heart {
+  font-size: 58px;
+  animation: beat 1.2s infinite;
+}
+
+@keyframes beat {
+  50% { transform: scale(1.12); }
+}
+
+h1 { font-size: 27px; }
+
+p { line-height: 1.6; color: #82566b; }
+
+.buttons {
+  display: flex;
+  gap: 14px;
+  margin-top: 28px;
+}
+
+button {
+  border: none;
+  padding: 14px 20px;
+  border-radius: 30px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.yes, .submit {
+  background: #ed5792;
+  color: white;
+}
+
+.no {
+  background: #f3e5ec;
+  color: #8c4969;
+}
+
+.buttons button { flex: 1; }
+
+.hidden { display: none !important; }
+
+.message {
+  margin-top: 24px;
+  padding: 18px;
+  background: #fff0f6;
+  border-radius: 18px;
+  line-height: 1.7;
+}
+
+label {
+  display: block;
+  text-align: left;
+  margin: 16px 0 7px;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+input, select {
+  width: 100%;
+  padding: 13px;
+  border: 1px solid #efc7d9;
+  border-radius: 12px;
+  background: white;
+  font-size: 16px;
+}
+
+.submit {
+  width: 100%;
+  margin-top: 22px;
+}
+
+.status {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+</style>
+</head>
+
+<body>
+<main class="card">
+
+  <div class="heart">💗</div>
+
+  <section id="invitation">
+    <h1>Hey, you! 🥹</h1>
+    <p>
+      I have a little question for you...<br>
+      Would you like to go on a date with me? 🌷
+    </p>
+
+    <div class="buttons">
+      <button class="no" id="noBtn">NO 🥺</button>
+      <button class="yes" id="yesBtn">YES 💖</button>
+    </div>
+  </section>
+
+  <section id="noPage" class="hidden">
+    <h1>It's okay 🥹💗</h1>
+
+    <div class="message">
+      <strong>
+        Maybe I'm not perfect, but I'd still love to take you on a date. ❤️
+      </strong>
+      <p>No pressure. Your answer matters to me. 🌷</p>
+    </div>
+
+    <button class="submit" id="backBtn">Back 💌</button>
+    <p id="noStatus" class="status"></p>
+  </section>
+
+  <section id="yesPage" class="hidden">
+    <h1>Yay!! 🥰💖</h1>
+    <p>Let's plan our little date. 🌹</p>
+
+    <form id="dateForm">
+      <label for="date">What day works for you? 📅</label>
+      <input type="date" id="date" required>
+
+      <label for="time">What time? ⏰</label>
+      <select id="time" required>
+        <option value="">Choose a time</option>
+        <option>10:00 AM</option>
+        <option>12:00 PM</option>
+        <option>2:00 PM</option>
+        <option>4:00 PM</option>
+        <option>6:00 PM</option>
+        <option>7:00 PM</option>
+        <option>8:00 PM</option>
+        <option>Let's decide together</option>
+      </select>
+
+      <label for="food">What would you like to eat? 🍓</label>
+      <select id="food" required>
+        <option value="">Choose your food</option>
+        <option>Pizza 🍕</option>
+        <option>Burgers 🍔</option>
+        <option>BBQ 🥩</option>
+        <option>Hot pot 🍲</option>
+        <option>Khmer food 🍜</option>
+        <option>Sushi 🍣</option>
+        <option>Dessert and coffee ☕</option>
+        <option>Anything you choose ❤️</option>
+        <option>Other / decide later</option>
+      </select>
+
+      <label for="place">Any place in mind? (optional) 📍</label>
+      <input type="text" id="place" maxlength="150"
+             placeholder="Cafe or restaurant...">
+
+      <button type="submit" class="submit" id="sendBtn">
+        Send my choices 💌
+      </button>
+    </form>
+
+    <p id="yesStatus" class="status"></p>
+  </section>
+
+</main>
+
+<script>
+const invitation = document.getElementById("invitation");
+const noPage = document.getElementById("noPage");
+const yesPage = document.getElementById("yesPage");
+const dateInput = document.getElementById("date");
+
+const now = new Date();
+dateInput.min = [
+  now.getFullYear(),
+  String(now.getMonth() + 1).padStart(2, "0"),
+  String(now.getDate()).padStart(2, "0")
+].join("-");
+
+function showPage(page) {
+  [invitation, noPage, yesPage].forEach(section => {
+    section.classList.add("hidden");
+  });
+  page.classList.remove("hidden");
+}
+
+async function sendTelegram(choice, details = {}) {
+  const response = await fetch("/api/notify", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ choice, details })
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || "Sending failed");
+  }
+}
+
+document.getElementById("noBtn").onclick = async () => {
+  showPage(noPage);
+  const status = document.getElementById("noStatus");
+  status.textContent = "Sending response...";
+
+  try {
+    await sendTelegram("NO");
+    status.textContent = "Response sent 💌";
+  } catch (error) {
+    status.textContent = "Couldn't send the notification.";
+    console.error(error);
+  }
+};
+
+document.getElementById("yesBtn").onclick = async () => {
+  showPage(yesPage);
+  const status = document.getElementById("yesStatus");
+  status.textContent = "Sending response...";
+
+  try {
+    await sendTelegram("YES");
+    status.textContent = "Your answer was sent! Choose your date 💖";
+  } catch (error) {
+    status.textContent =
+      "Telegram notification failed. You can still choose your date.";
+    console.error(error);
+  }
+};
+
+document.getElementById("backBtn").onclick = () => {
+  showPage(invitation);
+};
+
+document.getElementById("dateForm").onsubmit = async event => {
+  event.preventDefault();
+
+  const status = document.getElementById("yesStatus");
+  const button = document.getElementById("sendBtn");
+
+  if (dateInput.value < dateInput.min) {
+    status.textContent = "Please choose a valid date.";
+    return;
+  }
+
+  const details = {
+    date: dateInput.value,
+    time: document.getElementById("time").value,
+    food: document.getElementById("food").value,
+    place: document.getElementById("place").value.trim()
+  };
+
+  button.disabled = true;
+  button.textContent = "Sending...";
+  status.textContent = "Sending your choices...";
+
+  try {
+    await sendTelegram("DATE_DETAILS", details);
+    status.textContent = "Your choices have been sent! ❤️🌹";
+  } catch (error) {
+    status.textContent = "Couldn't send. Please try again later.";
+    console.error(error);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Send my choices 💌";
+  }
+};
+</script>
+</body>
+</html>
